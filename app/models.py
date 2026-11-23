@@ -1,5 +1,4 @@
 """Plain data models shared by the database, layout editor and printing code.
-
 All geometry is in millimetres. Models are JSON serialisable so that templates
 can be stored in SQLite and restored exactly.
 """
@@ -105,7 +104,7 @@ class Page:
 
 @dataclass
 class Document:
-    """One print job: A4 pages sharing an orientation and margin guide."""
+    # One print job: A4 pages sharing an orientation and margin guide.
     orientation: str = "portrait"
     margin_mm: float = 10.0
     grid_mm: float = 5.0
@@ -128,7 +127,7 @@ class Document:
 
 @dataclass
 class AutoLayoutParams:
-    """Settings for generating a document from selected instructions."""
+    # Settings for generating a document from selected instructions.
     orientation: str = "portrait"
     per_page: int = 0       # 0 = automatic
     margin_mm: float = 10.0

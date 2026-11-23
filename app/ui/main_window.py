@@ -1,4 +1,4 @@
-"""Main window: the whole print workflow on one screen."""
+# Main window: the whole print workflow on one screen.
 from __future__ import annotations
 
 import json
@@ -47,7 +47,7 @@ class MainWindow(QMainWindow):
         self._restore_settings()
         self.refresh_preview()
 
-    # ------------------------------------------------------------------ UI
+    # UI
     def _build_ui(self) -> None:
         def btn(text: str, fn, name: str = "") -> QPushButton:
             b = QPushButton(text); b.clicked.connect(fn)
@@ -63,7 +63,7 @@ class MainWindow(QMainWindow):
         def label(text: str) -> QLabel:
             l = QLabel(text); l.setObjectName("fieldLabel"); return l
 
-        # ---- left card: instructions
+        #  left card: instructions
         self.search = QLineEdit(); self.search.setPlaceholderText("Search instructions by name…")
         self.search.setClearButtonEnabled(True); self.search.textChanged.connect(self.apply_filter)
         self.list = QListWidget(); self.list.setIconSize(QSize(30, 30)); self.list.setUniformItemSizes(True)
@@ -82,7 +82,7 @@ class MainWindow(QMainWindow):
         left, lv = card("Packing Instructions")
         lv.addWidget(self.search); lv.addLayout(selrow); lv.addWidget(self.list, 1); lv.addLayout(manage)
 
-        # ---- right card 1: preview
+        # right card 1: preview
         self.preview = PagePreview()
         self.page_label = QLabel(); self.page_label.setAlignment(Qt.AlignCenter); self.page_label.setObjectName("status")
         self.prev_btn = btn("‹  Previous", lambda: self._go_page(-1), "nav")
@@ -91,7 +91,7 @@ class MainWindow(QMainWindow):
         pv_card, pv = card("A4 Page Preview")
         pv.addWidget(self.preview, 1); pv.addLayout(nav)
 
-        # ---- right card 2: print settings
+        # right card 2: print settings
         self.template_combo = QComboBox(); self.template_combo.activated.connect(self._template_chosen)
         self.paper = QLabel("A4  (210 × 297 mm)"); self.paper.setObjectName("value")
         self.orient = QComboBox(); self.orient.addItem("Portrait", "portrait"); self.orient.addItem("Landscape", "landscape")
@@ -148,7 +148,7 @@ class MainWindow(QMainWindow):
         self.setMinimumSize(max(1000, hint.width() + 20), hint.height() + self.statusBar().sizeHint().height() + 4)
         self.resize(1200, max(860, self.minimumHeight()))
 
-    # --------------------------------------------------------- settings io
+    #  settings io
     def _restore_settings(self) -> None:
         g = self.db.get_setting
         self.copies.setValue(int(g("copies", "1")))
@@ -172,7 +172,7 @@ class MainWindow(QMainWindow):
     def _save_selection(self) -> None:
         self.db.set_setting("selected_ids", json.dumps(sorted(self.checked_ids())))
 
-    # --------------------------------------------------------- instructions
+    #  instructions
     def reload_instructions(self, restore_selection: bool = False, keep: set[int] | None = None) -> None:
         if restore_selection:
             keep = set(json.loads(self.db.get_setting("selected_ids", "[]") or "[]"))
@@ -227,7 +227,7 @@ class MainWindow(QMainWindow):
         self._selection_edited()
 
     def _selection_edited(self) -> None:
-        """Checkbox change: an edited selection means automatic layout again."""
+        # Checkbox change: an edited selection means automatic layout again.
         if self.custom_doc is not None:
             self.custom_doc = None
             self.statusBar().showMessage("Selection changed - switched back to automatic layout.", 5000)
@@ -304,8 +304,8 @@ class MainWindow(QMainWindow):
             self.reload_instructions()
             self._selection_edited()
 
-    # ------------------------------------------------------------ layout
-    # ------------------------------------------------------------- print color
+    #  layout
+    #  print color
     def color_mode(self) -> str:
         return self.color_combo.currentData() or "color"
 
@@ -320,7 +320,7 @@ class MainWindow(QMainWindow):
         self.refresh_preview()
 
     def _update_color_capability(self) -> None:
-        """Enable/disable colour according to what the selected printer's driver reports."""
+        # Enable/disable colour according to what the selected printer's driver reports.
         entry = next((p for p in self._printers if p.name == self.printer_combo.currentData()), None)
         supported = entry.color_supported if entry else None
         color_item = self.color_combo.model().item(self.color_combo.findData("color"))
@@ -390,7 +390,7 @@ class MainWindow(QMainWindow):
                           save_cb or self._save_template_for)
         return ed.document() if ed.exec() == LayoutEditor.Accepted else None
 
-    # ---------------------------------------------------------- templates
+    #  templates
     def reload_templates(self, select_id: int | None = None) -> None:
         self.template_combo.blockSignals(True)
         self.template_combo.clear()
@@ -479,7 +479,7 @@ class MainWindow(QMainWindow):
         doc = t.document or build_document([valid[i] for i in t.instruction_ids if i in valid], t.params)
         return self._run_editor(doc, self.instructions, save_cb=self._save_template_for)
 
-    # ------------------------------------------------------------ printers
+    #  printers
     def refresh_printers(self) -> None:
         """Fresh enumeration of the printers installed in Windows; keeps the selected printer if it still exists."""
         wanted = self.printer_combo.currentData() or self.db.get_setting("printer")
@@ -546,7 +546,7 @@ class MainWindow(QMainWindow):
         self.print_btn.setEnabled(not empty and self.printer_combo.currentData() is not None)
         self.preview_btn.setEnabled(not empty)
 
-    # ------------------------------------------------------ preview / print
+    # preview / print
     def _show_preview_for(self, doc: Document) -> None:
         mode = self.color_mode()
         if not any(p.elements for p in doc.pages):

@@ -1,20 +1,15 @@
-"""Printer integration built on native Qt printing (QPrinter / QPrinterInfo)."""
+# Printer integration built on native Qt printing (QPrinter / QPrinterInfo).
 from __future__ import annotations
-
 import sys
 from dataclasses import dataclass, field
-
 from PySide6.QtCore import QMarginsF
 from PySide6.QtGui import QPageLayout, QPageSize, QPainter
 from PySide6.QtPrintSupport import QPrinter, QPrinterInfo
-
 from .models import Document
 from .renderer import UNIT, content_bounds_mm, paint_page
 
-
 class PrintError(RuntimeError):
-    """Raised with a user-readable message when printing cannot proceed."""
-
+     """ Raised with a user-readable message when printing cannot proceed."""
 
 @dataclass
 class PrinterEntry:
@@ -28,7 +23,7 @@ class PrinterEntry:
 
 @dataclass
 class PrinterScan:
-    """Result of one fresh printer enumeration, with everything needed to explain it."""
+   # Result of one fresh printer enumeration, with everything needed to explain it.
     printers: list[PrinterEntry] = field(default_factory=list)
     default: str | None = None
     qt_count: int = 0
@@ -51,20 +46,16 @@ _ERROR_INSUFFICIENT_BUFFER = 122
 _RPC_S_SERVER_UNAVAILABLE = 1722
 _RPC_S_CALL_FAILED = 1726
 
-
 def _windows_printers() -> tuple[list[str], str | None, str | None, bool]:
-    """Ask the Windows spooler directly (ctypes, no extra packages).
+    # Ask the Windows spooler directly (ctypes, no extra packages).
+    # Returns (names, default_name, error_text, spooler_down). Empty on non-Windows systems.
 
-    Returns (names, default_name, error_text, spooler_down). Empty on non-Windows systems.
-    """
     if not sys.platform.startswith("win"):
         return [], None, None, False
     try:
         import ctypes
         from ctypes import wintypes
-
         winspool = ctypes.WinDLL("winspool.drv", use_last_error=True)
-
         class PRINTER_INFO_4W(ctypes.Structure):
             _fields_ = [("pPrinterName", wintypes.LPWSTR), ("pServerName", wintypes.LPWSTR),
                         ("Attributes", wintypes.DWORD)]
@@ -102,18 +93,16 @@ def _windows_printers() -> tuple[list[str], str | None, str | None, bool]:
     except Exception as exc:  # noqa: BLE001 - diagnostics must never crash the app
         return [], None, f"Windows printer API unavailable: {exc}", False
 
-
 def _supports_color(info: QPrinterInfo) -> bool | None:
-    """Ask the printer driver (through Qt) whether it can print in colour. None if it does not say."""
+    # Ask the printer driver (through Qt) whether it can print in colour. None if it does not say.
     try:
         modes = list(info.supportedColorModes())
     except Exception:  # noqa: BLE001
         return None
     return QPrinter.ColorMode.Color in modes if modes else None
 
-
 def _qt_printers() -> tuple[list[PrinterEntry], str | None, list[str]]:
-    """Printers known to Qt. Each printer is read separately so one bad driver cannot hide the rest."""
+    # Printers known to Qt. Each printer is read separately so one bad driver cannot hide the rest.
     entries: list[PrinterEntry] = []
     errors: list[str] = []
     try:
@@ -136,9 +125,8 @@ def _qt_printers() -> tuple[list[PrinterEntry], str | None, list[str]]:
             errors.append(f"Could not read a printer: {exc}")
     return entries, default, errors
 
-
 def list_printers() -> PrinterScan:
-    """Fresh enumeration of all printers installed in Windows (Qt first, Windows API as cross-check)."""
+    # Fresh enumeration of all printers installed in Windows (Qt first, Windows API as cross-check).
     scan = PrinterScan()
     qt_entries, qt_default, qt_errors = _qt_printers()
     scan.errors.extend(qt_errors)
@@ -163,16 +151,14 @@ def list_printers() -> PrinterScan:
     scan.default = next((e.name for e in scan.printers if e.is_default), None)
     return scan
 
-
 def _find_info(name: str) -> QPrinterInfo | None:
     for info in QPrinterInfo.availablePrinters():
         if info.printerName() == name:
             return info
     return None
 
-
 def create_printer(name: str | None, orientation: str, copies: int = 1, mode: str = "color") -> QPrinter:
-    """Create an A4 QPrinter for exactly the named Windows printer (never silently another one)."""
+    # Create an A4 QPrinter for exactly the named Windows printer (never silently another one).
     if name:
         info = _find_info(name)
         printer = QPrinter(info, QPrinter.HighResolution) if info else QPrinter(QPrinter.HighResolution)
@@ -186,10 +172,8 @@ def create_printer(name: str | None, orientation: str, copies: int = 1, mode: st
     configure(printer, orientation, copies, mode)
     return printer
 
-
 def qt_color_mode(mode: str) -> QPrinter.ColorMode:
     return QPrinter.ColorMode.Color if mode == "color" else QPrinter.ColorMode.GrayScale
-
 
 def configure(printer: QPrinter, orientation: str, copies: int = 1, mode: str = "color") -> None:
     orient = QPageLayout.Landscape if orientation == "landscape" else QPageLayout.Portrait
@@ -199,15 +183,13 @@ def configure(printer: QPrinter, orientation: str, copies: int = 1, mode: str = 
     printer.setCopyCount(max(1, copies))
     printer.setColorMode(qt_color_mode(mode))   # the driver is told too; pixels are also converted by the renderer
 
-
 def printable_margins_mm(printer: QPrinter) -> tuple[float, float, float, float]:
-    """Hardware minimum margins (left, top, right, bottom) in mm."""
+    # Hardware minimum margins (left, top, right, bottom) in mm.
     m = printer.pageLayout().minimumMargins()
     return (m.left(), m.top(), m.right(), m.bottom())
 
-
 def clipping_warnings(doc: Document, printer: QPrinter) -> list[str]:
-    """Describe pages whose content reaches into the printer's unprintable edge."""
+    # Describe pages whose content reaches into the printer's unprintable edge.
     left, top, right, bottom = printable_margins_mm(printer)
     pw, ph = doc.size_mm
     warnings = []
@@ -223,10 +205,8 @@ def clipping_warnings(doc: Document, printer: QPrinter) -> list[str]:
             warnings.append(f"Page {i}: content extends beyond the A4 page.")
     return warnings
 
-
 def render_document(printer: QPrinter, doc: Document, copies: int = 1, mode: str = "color") -> list[str]:
     """Paint every page of `doc` onto `printer` (a real printer, PDF or preview) in colour `mode`.
-
     Used for printing, print preview and PDF export, so all three are identical. The same mode is applied to
     every page and every copy. Returns warnings (e.g. the driver changed the colour mode).
     """
@@ -260,25 +240,22 @@ def render_document(printer: QPrinter, doc: Document, copies: int = 1, mode: str
         raise PrintError("The printer reported an error while printing. Check paper, ink/toner and connection.")
     return warnings
 
-
 def print_document(doc: Document, printer_name: str | None, copies: int, mode: str = "color") -> list[str]:
     if not any(p.elements for p in doc.pages):
         raise PrintError("There is nothing to print. Select at least one instruction.")
     printer = create_printer(printer_name, doc.orientation, copies, mode)
     return render_document(printer, doc, copies, mode)
 
-
 def export_pdf(doc: Document, path: str, mode: str = "color") -> None:
-    """Write `doc` to a PDF through the same render path (used for checks)."""
+    # Write `doc` to a PDF through the same render path (used for checks).
     printer = QPrinter(QPrinter.HighResolution)
     printer.setOutputFormat(QPrinter.PdfFormat)
     printer.setOutputFileName(path)
     configure(printer, doc.orientation, 1, mode)
     render_document(printer, doc, 1, mode)
 
-
 def diagnose() -> list[str]:
-    """Human-readable printer diagnostics (used by --printer-diag and --selftest). Prints nothing."""
+    # Human-readable printer diagnostics (used by --printer-diag and --selftest). Prints nothing.
     from PySide6 import __version__ as pyside_version
     from PySide6.QtCore import qVersion
     lines = [f"PySide6 {pyside_version}, Qt {qVersion()}, platform {sys.platform}"]

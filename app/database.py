@@ -1,5 +1,4 @@
 """Local SQLite storage: instructions, templates and settings for this computer.
-
 The file lives in %APPDATA%\\PackFlow and is created on first start. Schema upgrades are versioned (PRAGMA user_version),
 make a .bak-vN copy first and never erase data. A damaged file is set aside, not deleted.
 """
@@ -98,7 +97,7 @@ class Database:
         self._migrate()
         self._seed_defaults()
 
-    # ---- connection / migration ----
+    # connection / migration 
     def _connect(self) -> sqlite3.Connection:
         conn = sqlite3.connect(self.path)
         conn.row_factory = sqlite3.Row
@@ -159,7 +158,7 @@ class Database:
     def close(self) -> None:
         self.conn.close()
 
-    # ---- settings ----
+    #  settings 
     def get_setting(self, key: str, default: str | None = None) -> str | None:
         row = self.conn.execute("SELECT value FROM settings WHERE key=?", (key,)).fetchone()
         return row["value"] if row else default
@@ -168,7 +167,7 @@ class Database:
         with self.conn:
             self.conn.execute("INSERT OR REPLACE INTO settings(key,value) VALUES(?,?)", (key, str(value)))
 
-    # ---- instructions ----
+    # instructions 
     @staticmethod
     def _to_instruction(r: sqlite3.Row) -> Instruction:
         return Instruction(id=r["id"], name=r["name"], text=r["text"], symbol=r["symbol"],
@@ -217,13 +216,13 @@ class Database:
                     self.conn.execute("UPDATE templates SET instruction_ids=? WHERE id=?",
                                       (json.dumps(t.instruction_ids), t.id))
 
-    # ---- symbols ----
+    #  symbols 
     def symbol_config(self) -> list[tuple[str, str]]:
         """Enabled symbols as (key, label), in the configured order."""
         rows = self.conn.execute("SELECT key,label FROM symbol_config WHERE enabled=1 ORDER BY sort_order").fetchall()
         return [(r["key"], r["label"]) for r in rows if r["key"] in SYMBOLS]
 
-    # ---- templates ----
+    #  templates 
     @staticmethod
     def _to_template(r: sqlite3.Row) -> Template:
         doc = Document.from_dict(json.loads(r["document"])) if r["document"] else None

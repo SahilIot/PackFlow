@@ -1,6 +1,5 @@
-"""Visual A4 layout editor: drag, resize, align and style elements on real-size pages."""
+# A4 layout editor
 from __future__ import annotations
-
 import json
 from typing import Callable
 
@@ -24,9 +23,8 @@ HANDLES = {"nw": (0, 0), "n": (.5, 0), "ne": (1, 0), "e": (1, .5), "se": (1, 1),
 CURSORS = {"nw": Qt.SizeFDiagCursor, "se": Qt.SizeFDiagCursor, "ne": Qt.SizeBDiagCursor, "sw": Qt.SizeBDiagCursor,
            "n": Qt.SizeVerCursor, "s": Qt.SizeVerCursor, "e": Qt.SizeHorCursor, "w": Qt.SizeHorCursor}
 
-
+# Manages the page and its background
 class PageScene(QGraphicsScene):
-    """Scene in 0.1 mm units. Draws the paper, grid and margin guides behind the elements."""
     changed_by_user = Signal()
 
     def __init__(self, doc: Document) -> None:
@@ -35,17 +33,17 @@ class PageScene(QGraphicsScene):
         self.snap = True
         self.show_grid = True
         self.update_size()
-
+# This determines the drawing area
     def update_size(self) -> None:
         w, h = self.doc.size_mm
         pad = 15 * UNIT
         self.setSceneRect(-pad, -pad, w * UNIT + 2 * pad, h * UNIT + 2 * pad)
         self.update()
-
+# Sanp to grid -> useful feature -> suppose the grid size is 5mm we move ele to 23mm it will snap to 25mm make alignment accurately
     def snap_value(self, v: float) -> float:
         step = max(self.doc.grid_mm, 0.5) * UNIT
         return round(v / step) * step if self.snap else v
-
+# Draws the background
     def drawBackground(self, p: QPainter, rect: QRectF) -> None:
         p.fillRect(rect, QColor("#b9c2cd"))
         w, h = self.doc.size_mm
@@ -66,7 +64,7 @@ class PageScene(QGraphicsScene):
         p.setPen(pen); p.setBrush(Qt.NoBrush)
         p.drawRect(QRectF(m, m, W - 2 * m, H - 2 * m))
 
-
+# Manages individual elements on the page
 class ElementItem(QGraphicsItem):
     def __init__(self, el: Element, scene: PageScene) -> None:
         super().__init__()
@@ -178,7 +176,7 @@ def _element_geometry_changed(self: PageScene) -> None:
 
 PageScene.element_geometry_changed = _element_geometry_changed  # type: ignore[attr-defined]
 
-
+# This class controls how the user interacts with the page view.
 class EditorView(QGraphicsView):
     def __init__(self, scene: PageScene, owner: "LayoutEditor") -> None:
         super().__init__(scene)
@@ -206,9 +204,8 @@ class EditorView(QGraphicsView):
         else:
             super().keyPressEvent(event)
 
-
+# Manages the complete editing window and its functionality.
 class LayoutEditor(QDialog):
-    """Modal editor. `document()` returns the edited copy after accept()."""
 
     def __init__(self, parent: QWidget | None, doc: Document, instructions: list[Instruction],
                  symbols: list[tuple[str, str]], preview: Callable[[Document], None],
@@ -237,7 +234,6 @@ class LayoutEditor(QDialog):
         self.resize(1280, 820)
         QTimer.singleShot(0, self.fit)
 
-    # ------------------------------------------------------------------ UI
     def _build_ui(self) -> None:
         tb = QToolBar()
         tb.setStyleSheet("QToolButton { padding: 5px 7px; }")
@@ -367,7 +363,6 @@ class LayoutEditor(QDialog):
         s.valueChanged.connect(slot)
         return s
 
-    # ------------------------------------------------------------ document
     @property
     def page(self) -> Page:
         return self.doc.pages[self.page_index]
@@ -405,7 +400,6 @@ class LayoutEditor(QDialog):
     def selected_elements(self) -> list[Element]:
         return [i.el for i in self.selected_items()]
 
-    # ---------------------------------------------------------------- undo
     def _snapshot(self) -> str:
         return json.dumps({"doc": self.doc.to_dict(), "page": self.page_index})
 
@@ -437,7 +431,6 @@ class LayoutEditor(QDialog):
             self._undo.append(self._snapshot())
             self._restore(self._redo.pop())
 
-    # ------------------------------------------------------------- actions
     def _place_new(self, el: Element) -> None:
         self.push_undo()
         pw, ph = self.doc.size_mm
@@ -554,7 +547,6 @@ class LayoutEditor(QDialog):
             it.refresh()
         self._sync_geometry_fields()
 
-    # ---------------------------------------------------------- page level
     def add_page(self) -> None:
         self.push_undo()
         self.doc.pages.insert(self.page_index + 1, Page())
@@ -613,7 +605,6 @@ class LayoutEditor(QDialog):
         w, h = self.doc.size_mm
         self.view.fitInView(QRectF(-5 * UNIT, -5 * UNIT, (w + 10) * UNIT, (h + 10) * UNIT), Qt.KeepAspectRatio)
 
-    # ---------------------------------------------------------- properties
     def _selection_changed(self) -> None:
         if self._loading:
             return

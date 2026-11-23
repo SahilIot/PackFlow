@@ -1,15 +1,11 @@
-"""Automatic layout: turns selected instructions into paginated A4 documents."""
+# Automatic layout: turns selected instructions into paginated A4 documents.
 from __future__ import annotations
-
 import math
-
 from .models import AutoLayoutParams, Document, Element, Instruction, Page, page_size_mm
-
 AUTO_MAX_PER_PAGE = 6
 
-
 def grid_for(count: int, page_w: float, page_h: float) -> tuple[int, int]:
-    """Choose (cols, rows) for `count` cells that keeps cells close to square-ish/wide."""
+    # Choose (cols, rows) for `count` cells that keeps cells close to square-ish/wide.
     best, best_score = (1, count), float("inf")
     for cols in range(1, count + 1):
         rows = math.ceil(count / cols)
@@ -30,7 +26,7 @@ def card_from_instruction(ins: Instruction, x: float, y: float, w: float, h: flo
 
 
 def build_document(instructions: list[Instruction], params: AutoLayoutParams) -> Document:
-    """Arrange instruction cards in a grid, adding pages as needed."""
+    # Arrange instruction cards in a grid, adding pages as needed.
     doc = Document(orientation=params.orientation, margin_mm=params.margin_mm)
     doc.pages = []
     if not instructions:

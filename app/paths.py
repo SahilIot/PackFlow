@@ -1,4 +1,4 @@
-"""Filesystem locations (user data directory and bundled resources)."""
+# Filesystem locations (user data directory and bundled resources).
 from __future__ import annotations
 
 import os
@@ -10,17 +10,16 @@ LEGACY_APP_NAME = "MachinePackingPrint"
 
 
 def legacy_data_dir() -> Path:
-    """Folder used by versions before the rename (its database is copied, never moved or deleted)."""
+    # Folder used by versions before the rename (its database is copied, never moved or deleted).
     if sys.platform.startswith("win"):
         return Path(os.environ.get("APPDATA") or Path.home() / "AppData" / "Roaming") / LEGACY_APP_NAME
     return Path(os.environ.get("XDG_DATA_HOME") or Path.home() / ".local" / "share") / LEGACY_APP_NAME
 
 
 def data_dir() -> Path:
-    """Per-user writable data directory (never inside the executable folder).
-
-    Windows: %APPDATA%\\PackFlow. Override with MPP_DATA_DIR.
-    """
+    # Per-user writable data directory (never inside the executable folder).
+    # Windows: %APPDATA%\\PackFlow. Override with MPP_DATA_DIR.
+    
     override = os.environ.get("MPP_DATA_DIR")
     if override:
         base = Path(override)
@@ -37,10 +36,9 @@ def db_path() -> Path:
 
 
 def adopt_legacy_database() -> bool:
-    """First start of PackFlow: if an older version's database exists and there is none yet, COPY it over.
-
-    The original file is left untouched. Returns True when a copy was made.
-    """
+    # First start of PackFlow: if an older version's database exists and there is none yet, COPY it over.
+   # The original file is left untouched. Returns True when a copy was made.
+    
     import shutil
     new = db_path()
     old = legacy_data_dir() / "machine_packing_print.db"
@@ -54,6 +52,6 @@ def adopt_legacy_database() -> bool:
 
 
 def resource_path(*parts: str) -> Path:
-    """Path to a bundled read-only resource (works from source and PyInstaller)."""
+   # Path to a bundled read-only resource (works from source and PyInstaller).
     root = Path(getattr(sys, "_MEIPASS", Path(__file__).resolve().parent.parent))
     return root.joinpath(*parts)

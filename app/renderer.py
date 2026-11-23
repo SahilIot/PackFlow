@@ -1,5 +1,4 @@
 """Single rendering path used by the editor, the preview and the printer.
-
 Coordinates: one painter unit = 0.1 mm (UNIT units per millimetre). Because the
 exact same functions paint the editor canvas, the preview and the printout,
 what you see is what is printed.
@@ -26,10 +25,9 @@ def make_font(family: str, pt: float, bold: bool, italic: bool) -> QFont:
 
 
 def convert_color(value: str | QColor, mode: str) -> QColor:
-    """Map a configured colour to what is printed in `mode` ("color", "grayscale" or "bw").
-
-    This one function is used by the preview, the PDF export and the printer, so they always agree.
-    """
+    # Map a configured colour to what is printed in `mode` ("color", "grayscale" or "bw").
+    # This one function is used by the preview, the PDF export and the printer, so they always agree.
+    
     c = QColor(value) if not isinstance(value, QColor) else QColor(value)
     if not c.isValid():
         c = QColor(0, 0, 0)
@@ -40,23 +38,20 @@ def convert_color(value: str | QColor, mode: str) -> QColor:
         return QColor(lum, lum, lum)
     return QColor(0, 0, 0) if lum < 160 else QColor(255, 255, 255)   # "bw": no intermediate shades
 
-
 def _readable(fg: QColor, bg: QColor, mode: str) -> QColor:
-    """In black & white, never print a foreground in the same colour as what is behind it."""
+    # In black & white, never print a foreground in the same colour as what is behind it.
     if mode == "bw" and fg == bg:
         return QColor(0, 0, 0) if bg == QColor(255, 255, 255) else QColor(255, 255, 255)
     return fg
 
-
 _ALIGN = {"left": Qt.AlignLeft, "center": Qt.AlignHCenter, "right": Qt.AlignRight}
-
 
 def _text_flags(el: Element) -> int:
     return int(_ALIGN.get(el.align, Qt.AlignHCenter) | Qt.AlignVCenter | Qt.TextWordWrap)
 
 
 def fitted_font(painter: QPainter, el: Element, rect: QRectF) -> QFont:
-    """Return the element font, shrunk if auto-fit is on and the text overflows."""
+    # Return the element font, shrunk if auto-fit is on and the text overflows.
     pt = el.font_pt
     font = make_font(el.font_family, pt, el.bold, el.italic)
     if not el.auto_fit:
@@ -73,7 +68,7 @@ def fitted_font(painter: QPainter, el: Element, rect: QRectF) -> QFont:
 
 
 def split_rects(el: Element, inner: QRectF) -> tuple[QRectF | None, QRectF | None]:
-    """Split the inner box into (symbol_rect, text_rect) depending on content."""
+    # Split the inner box into (symbol_rect, text_rect) depending on content.
     has_sym, has_txt = bool(el.symbol), bool(el.text.strip())
     if has_sym and not has_txt:
         return inner, None
@@ -98,7 +93,7 @@ def split_rects(el: Element, inner: QRectF) -> tuple[QRectF | None, QRectF | Non
 
 
 def draw_element(painter: QPainter, el: Element, mode: str = "color") -> None:
-    """Paint one element into the local rect (0, 0, w, h) in painter units, in colour `mode`."""
+    # Paint one element into the local rect (0, 0, w, h) in painter units, in colour mode
     W, H = el.w * UNIT, el.h * UNIT
     painter.save()
     painter.setRenderHint(QPainter.Antialiasing, True)
@@ -132,7 +127,7 @@ def draw_element(painter: QPainter, el: Element, mode: str = "color") -> None:
 
 
 def paint_page(painter: QPainter, doc: Document, page: Page, mode: str = "color") -> None:
-    """Paint all elements of a page; painter origin = page top-left, unit = 0.1 mm."""
+    # Paint all elements of a page; painter origin = page top-left, unit = 0.1 mm.
     for el in page.elements:
         painter.save()
         painter.translate(el.x * UNIT, el.y * UNIT)
@@ -141,7 +136,7 @@ def paint_page(painter: QPainter, doc: Document, page: Page, mode: str = "color"
 
 
 def content_bounds_mm(page: Page) -> tuple[float, float, float, float] | None:
-    """(min_x, min_y, max_x, max_y) of all elements, or None if the page is empty."""
+    # (min_x, min_y, max_x, max_y) of all elements, or None if the page is empty.
     if not page.elements:
         return None
     return (min(e.x for e in page.elements), min(e.y for e in page.elements),

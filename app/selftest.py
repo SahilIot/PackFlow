@@ -1,5 +1,4 @@
 """Headless self-check used to verify a packaged build: `PackFlow.exe --selftest`.
-
 Checks database creation, layout, vector rendering to PDF and printer detection,
 then writes a report to %TEMP%\\PackFlow_selftest.txt and exits 0 (pass) or 1.
 """
@@ -81,7 +80,7 @@ def run_selftest() -> int:
 
 
 def run_printer_diag() -> int:
-    """`--printer-diag`: list printers as the app sees them (Qt and Windows API) and test that each opens."""
+     # printer-diag: list printers as the app sees them (Qt and Windows API) and test that each opens.
     report = Path(tempfile.gettempdir()) / "PackFlow_printers.txt"
     try:
         from PySide6.QtWidgets import QApplication

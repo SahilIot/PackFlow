@@ -1,12 +1,9 @@
 """Built-in vector packing symbols (black on white, printer friendly).
-
 Every symbol is drawn into a 100 x 100 design box and scaled to the target
 rectangle, so it stays sharp at any size and prints identically to the preview.
 """
 from __future__ import annotations
-
 from typing import Callable
-
 from PySide6.QtCore import QPointF, QRectF, Qt
 from PySide6.QtGui import QBrush, QColor, QPainter, QPainterPath, QPen, QPolygonF
 
@@ -15,10 +12,8 @@ WHITE = QColor(255, 255, 255)
 # Colours in force while one symbol is drawn: "ink" = line/fill colour, "paper" = the colour behind the symbol.
 _STATE = {"ink": BLACK, "paper": WHITE}
 
-
 def ink() -> QColor:
     return _STATE["ink"]
-
 
 def paper() -> QColor:
     return _STATE["paper"]
@@ -29,15 +24,12 @@ def _pen(painter: QPainter, width: float = LW) -> None:
     painter.setPen(QPen(ink(), width, Qt.SolidLine, Qt.RoundCap, Qt.RoundJoin))
     painter.setBrush(Qt.NoBrush)
 
-
 def _fill(painter: QPainter, color: QColor | None = None) -> None:
     painter.setPen(QPen(ink(), 1.5, Qt.SolidLine, Qt.RoundCap, Qt.RoundJoin))
     painter.setBrush(QBrush(color or ink()))
 
-
 def _poly(painter: QPainter, pts: list[tuple[float, float]]) -> None:
     painter.drawPolygon(QPolygonF([QPointF(x, y) for x, y in pts]))
-
 
 def _arrow_up(painter: QPainter, cx: float, top: float, bottom: float, head_w: float, shaft_w: float,
               head_h: float) -> None:
@@ -46,38 +38,31 @@ def _arrow_up(painter: QPainter, cx: float, top: float, bottom: float, head_w: f
                     (cx + shaft_w / 2, bottom), (cx - shaft_w / 2, bottom),
                     (cx - shaft_w / 2, top + head_h), (cx - head_w / 2, top + head_h)])
 
-
 def _box(painter: QPainter, x: float, y: float, w: float, h: float, tape: bool = True) -> None:
     _pen(painter, 4)
     painter.drawRect(QRectF(x, y, w, h))
     if tape:
         painter.drawLine(QPointF(x + w / 2, y), QPointF(x + w / 2, y + h * 0.3))
 
-
 def arrow_up(p: QPainter) -> None:
     _arrow_up(p, 50, 6, 94, 70, 28, 40)
-
 
 def arrow_down(p: QPainter) -> None:
     p.save(); p.translate(50, 50); p.rotate(180); p.translate(-50, -50)
     arrow_up(p); p.restore()
 
-
 def arrow_left(p: QPainter) -> None:
     p.save(); p.translate(50, 50); p.rotate(-90); p.translate(-50, -50)
     arrow_up(p); p.restore()
-
 
 def arrow_right(p: QPainter) -> None:
     p.save(); p.translate(50, 50); p.rotate(90); p.translate(-50, -50)
     arrow_up(p); p.restore()
 
-
 def this_side_up(p: QPainter) -> None:
     # ISO 7000 style: two upward arrows side by side
     _arrow_up(p, 28, 8, 92, 40, 15, 30)
     _arrow_up(p, 72, 8, 92, 40, 15, 30)
-
 
 def fragile(p: QPainter) -> None:
     # wine glass with a crack
@@ -95,7 +80,6 @@ def fragile(p: QPainter) -> None:
     zig.moveTo(50, 8); zig.lineTo(43, 24); zig.lineTo(56, 34); zig.lineTo(47, 50)
     p.drawPath(zig)
 
-
 def handle_with_care(p: QPainter) -> None:
     # carton resting on a cupped hand
     _box(p, 26, 8, 48, 34)
@@ -111,7 +95,6 @@ def handle_with_care(p: QPainter) -> None:
     thumb.moveTo(6, 58); thumb.lineTo(6, 90); thumb.lineTo(52, 90)
     thumb.cubicTo(70, 90, 82, 80, 94, 50)
     p.drawPath(thumb)
-
 
 def keep_dry(p: QPainter) -> None:
     # umbrella with rain
@@ -135,7 +118,6 @@ def keep_dry(p: QPainter) -> None:
     p.drawLine(QPointF(30, 58), QPointF(25, 70))
     p.drawLine(QPointF(70, 58), QPointF(65, 70))
 
-
 def do_not_stack(p: QPainter) -> None:
     _box(p, 22, 6, 56, 30, tape=False)
     _box(p, 22, 38, 56, 30, tape=False)
@@ -143,7 +125,6 @@ def do_not_stack(p: QPainter) -> None:
     _pen(p, 7)
     p.drawLine(QPointF(8, 8), QPointF(92, 94))
     p.drawLine(QPointF(92, 8), QPointF(8, 94))
-
 
 def heavy_material(p: QPainter) -> None:
     # weight block
@@ -157,7 +138,6 @@ def heavy_material(p: QPainter) -> None:
     f = p.font(); f.setBold(True); f.setFamily("Arial"); f.setPixelSize(30); p.setFont(f)
     p.drawText(QRectF(4, 40, 92, 50), Qt.AlignCenter, "KG")
 
-
 def lift_here(p: QPainter) -> None:
     # carton with lifting arrows pointing up at the two lift points
     _box(p, 8, 8, 84, 52)
@@ -165,7 +145,6 @@ def lift_here(p: QPainter) -> None:
     _arrow_up(p, 76, 66, 96, 26, 10, 14)
     _pen(p, 4)
     p.drawLine(QPointF(24, 60), QPointF(24, 66)); p.drawLine(QPointF(76, 60), QPointF(76, 66))
-
 
 def center_of_gravity(p: QPainter) -> None:
     c = QPointF(50, 50); r = 26
@@ -179,7 +158,6 @@ def center_of_gravity(p: QPainter) -> None:
     p.drawEllipse(rect)
     p.drawLine(QPointF(50, 4), QPointF(50, 96))
     p.drawLine(QPointF(4, 50), QPointF(96, 50))
-
 
 # key -> (label, draw function)
 SYMBOLS: dict[str, tuple[str, Callable[[QPainter], None]]] = {
@@ -197,16 +175,13 @@ SYMBOLS: dict[str, tuple[str, Callable[[QPainter], None]]] = {
     "this_side_up": ("This side up", this_side_up),
 }
 
-
 def symbol_label(key: str) -> str:
     return SYMBOLS[key][0] if key in SYMBOLS else key
-
 
 def draw_symbol(painter: QPainter, key: str, rect: QRectF, color: QColor | None = None,
                 background: QColor | None = None) -> None:
     """Draw symbol `key` centred in `rect`, keeping its square proportions.
-
-    `color` is the line/fill colour (default black); `background` is what shows through the
+    color is the line/fill colour (default black); `background` is what shows through the
     symbol's "white" parts (default white), so symbols stay correct on coloured backgrounds.
     """
     if key not in SYMBOLS or rect.width() <= 0 or rect.height() <= 0:

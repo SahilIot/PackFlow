@@ -1,4 +1,4 @@
-"""Template manager: use, edit layout, duplicate, rename and delete saved templates."""
+# Template manager: use, edit layout, duplicate, rename and delete saved templates.
 from __future__ import annotations
 
 import json

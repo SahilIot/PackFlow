@@ -1,17 +1,17 @@
-"""Dialog for adding / editing a packing instruction, with live preview."""
+# Add Instruction/ Edit instruction dailog 
 from __future__ import annotations
 
-from PySide6.QtGui import QFont
+from PySide6.QtGui import QFont # Used to select and configure the font
 from PySide6.QtWidgets import (QCheckBox, QComboBox, QDialog, QDialogButtonBox, QDoubleSpinBox, QFontComboBox,
                                QFormLayout, QHBoxLayout, QLabel, QLineEdit, QMessageBox, QPlainTextEdit,
-                               QVBoxLayout, QWidget)
+                               QVBoxLayout, QWidget) # 
 
-from ..layout import card_from_instruction
-from ..models import ALIGNMENTS, SYMBOL_POSITIONS, Instruction
-from ..symbols import SYMBOLS
-from .widgets import ColorButton, ElementPreview, symbol_icon
+from ..layout import card_from_instruction # Converts instruction info into a printable layout element
+from ..models import ALIGNMENTS, SYMBOL_POSITIONS, Instruction # Defines the instruction data model and available alignments/positions.
+from ..symbols import SYMBOLS # Contains available packing symbols
+from .widgets import ColorButton, ElementPreview, symbol_icon # Provides custom colour buttons , preview widgets and symbol icons
 
-
+# Populated the symbol dropdown
 def fill_symbol_combo(combo: QComboBox, symbols: list[tuple[str, str]], current: str = "") -> None:
     combo.clear()
     combo.addItem("(no symbol)", "")
@@ -20,7 +20,7 @@ def fill_symbol_combo(combo: QComboBox, symbols: list[tuple[str, str]], current:
     idx = combo.findData(current)
     combo.setCurrentIndex(max(idx, 0))
 
-
+# Main file -> creates a popup used for adding or editing instructions.
 class InstructionDialog(QDialog):
     def __init__(self, parent: QWidget | None, symbols: list[tuple[str, str]], instruction: Instruction | None = None) -> None:
         super().__init__(parent)
@@ -91,7 +91,7 @@ class InstructionDialog(QDialog):
                     self.symbol_color.colorChanged, self.border_color.colorChanged, self.bg_color.colorChanged):
             sig.connect(self._update_preview)
         self._update_preview()
-
+# Collecting all the entered information
     def _collect(self) -> Instruction:
         i = self._ins
         i.name = self.name.text().strip()
@@ -107,16 +107,16 @@ class InstructionDialog(QDialog):
         i.text_color, i.symbol_color = self.text_color.color(), self.symbol_color.color()
         i.border_color, i.bg_color = self.border_color.color(), self.bg_color.color()
         return i
-
+# Generating the preview
     def _update_preview(self) -> None:
         i = self._collect()
         self.preview.set_element(card_from_instruction(i, 0, 0, 90, 70))
-
+# Validating before saving
     def _accept(self) -> None:
         if not self.name.text().strip():
             QMessageBox.warning(self, "Name required", "Please enter a name for the instruction.")
             return
         self.accept()
-
+# Returning the final instruction
     def instruction(self) -> Instruction:
         return self._collect()

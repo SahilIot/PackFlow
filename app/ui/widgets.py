@@ -1,4 +1,4 @@
-"""Small reusable widgets: symbol icons, element preview and A4 page preview."""
+# Small reusable widgets: symbol icons, element preview and A4 page preview.
 from __future__ import annotations
 
 from PySide6.QtCore import QRectF, QSize, Qt, Signal
@@ -39,7 +39,7 @@ def swatch_icon(color: str, size: int = 18) -> QIcon:
 
 
 class ColorButton(QPushButton):
-    """Button showing the current colour; opens a menu of preset colours plus a full colour picker."""
+    # Button showing the current colour; opens a menu of preset colours plus a full colour picker.
     colorChanged = Signal(str)
 
     def __init__(self, color: str = "#000000", allow_none: bool = False, parent: QWidget | None = None) -> None:
@@ -78,7 +78,7 @@ class ColorButton(QPushButton):
 
 
 class ElementPreview(QWidget):
-    """Shows one element exactly as it will be printed, scaled to fit."""
+    # Shows one element exactly as it will be printed, scaled to fit.
 
     def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
@@ -104,7 +104,7 @@ class ElementPreview(QWidget):
 
 
 class PagePreview(QWidget):
-    """Live A4 page thumbnail rendered by the same code that prints."""
+    # Live A4 page thumbnail rendered by the same code that prints.
 
     def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
