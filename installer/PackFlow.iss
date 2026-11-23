@@ -1,5 +1,5 @@
 ; PackFlow installer (Inno Setup 6). A normal Windows installer, no questions about servers or databases.
-; Build: run build.bat first (creates dist\PackFlow), then build_installer.bat -> installer\Output\PackFlow-Setup.exe
+; Build: run scripts\build.bat first (creates dist\PackFlow), then scripts\build_installer.bat -> installer\Output\PackFlow-Setup.exe
 ; Silent install: PackFlow-Setup.exe /VERYSILENT
 ; User data lives in %APPDATA%\PackFlow and is never touched by installing, updating or uninstalling.
 #define AppName "PackFlow"

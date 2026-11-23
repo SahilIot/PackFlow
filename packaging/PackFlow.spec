@@ -1,14 +1,16 @@
 # -*- mode: python ; coding: utf-8 -*-
 # PyInstaller spec for PackFlow (folder build: reliable, fast start, few antivirus false alarms).
-from PyInstaller.utils.hooks import collect_data_files
+import os
+
+ROOT = os.path.abspath(os.path.join(SPECPATH, ".."))   # SPECPATH = this packaging\ folder; ROOT = project root
 
 block_cipher = None
 
 a = Analysis(
-    ["main.py"],
-    pathex=["."],
+    [os.path.join(ROOT, "main.py")],
+    pathex=[ROOT],
     binaries=[],
-    datas=[("resources", "resources")],
+    datas=[(os.path.join(ROOT, "resources"), "resources")],
     hiddenimports=["PySide6.QtPrintSupport"],   # makes sure the Windows printer plugin is bundled
     hookspath=[],
     runtime_hooks=[],
@@ -22,7 +24,7 @@ exe = EXE(
     exclude_binaries=True,
     name="PackFlow",
     console=False,                 # normal windowed application
-    icon="resources/icon.ico",
+    icon=os.path.join(ROOT, "resources", "icon.ico"),
     upx=False,
 )
 coll = COLLECT(exe, a.binaries, a.datas, name="PackFlow", upx=False)

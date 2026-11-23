@@ -1,11 +1,39 @@
 # PackFlow
 
-Windows desktop application for printing machine packing instructions (FRONT, TOP, FRAGILE, …) on A4 paper.
-No Word, Excel or PDF editor is needed - the page is printed directly from the app.
+A standalone Windows desktop application for printing machine packing instructions (FRONT, TOP, FRAGILE, …) on A4 paper.
+The page is printed directly from the app - no Word, Excel or PDF editor needed.
 
-PackFlow is a standalone program: install it, open it, choose your printer, print. Every computer keeps its own
-instructions, templates, layouts and settings in a local SQLite file. No server, login, database install or internet is needed.
-Sharing and building: [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md).
+## Features
+
+- Ready-made packing instructions plus your own, with text, symbol, border and background colours
+- Templates, and a visual layout editor (drag, resize, multi-page, grid arrange, undo/redo)
+- A4 portrait or landscape, live preview, print preview, copies, printer selection, PDF output
+- Colour, grayscale or black & white printing (Brother printers supported)
+- Works offline; every computer keeps its own data. No server, account or database install
+
+## Technology
+
+Python 3.10+, PySide6 (Qt, including Qt Print Support), SQLite, PyInstaller (Windows build), Inno Setup 6 (installer).
+
+## Download and install
+
+1. Get `PackFlow-Setup.exe` (build it yourself, see below, or ask whoever built it).
+2. Run it (no administrator rights needed) and open **PackFlow** from the desktop or Start menu.
+3. Choose your printer in the app and print.
+
+## Run from source
+
+Windows: double-click `scripts\run_from_source.bat` (creates `.venv`, installs requirements, starts the app).
+Manually: `pip install -r requirements.txt` then `python main.py`.
+
+## Build the Windows executable and installer
+
+Run on a Windows PC with Python 3.10+:
+
+1. `scripts\build.bat` - builds `dist\PackFlow\PackFlow.exe` and runs a self-check. Python is not needed to run the result.
+2. `scripts\build_installer.bat` (needs [Inno Setup 6](https://jrsoftware.org/isdl.php)) - creates `installer\Output\PackFlow-Setup.exe`.
+
+More in [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md).
 
 ## For factory users (daily use)
 
@@ -33,7 +61,7 @@ Tips
 - Each instruction has **text, symbol, border and background colors** (Edit Instruction dialog), and each element in the
   layout editor has the same controls. Pick from Black, Red, Blue, Green, Orange, Yellow, White or **Custom color…**.
   Built-in instructions come with example colors (FRONT blue, FRAGILE red, KEEP DRY blue …) that you can change.
-- Existing data is upgraded automatically (a `.bak-v1` backup of the database is made first). Old templates and layouts
+- Existing data is upgraded automatically (a `.bak-vN` backup of the database is made first). Old templates and layouts
   keep their black-and-white look.
 - If the printout is not in color although *Color* is selected, open the printer's **Printing Preferences** in Windows
   and set its color option to *Color* or *Auto* - some drivers (Brother included) have a saved default that can
@@ -63,11 +91,6 @@ To back up or move your data, copy the `.db` file while PackFlow is closed.
 Note: templates with a *custom layout* store their own copy of the text; editing an instruction later does not
 change such templates (automatic-layout templates always use the current instruction).
 
-## Building (on a Windows PC)
-
-`build.bat` builds `dist\PackFlow\PackFlow.exe` (no Python needed to run it) and tests it; `build_installer.bat` (Inno Setup 6, optional) makes
-`installer\Output\PackFlow-Setup.exe`. Share the setup file with colleagues. Details in docs/DEPLOYMENT.md.
-
 ### Printer troubleshooting
 - The printer list is read fresh from Windows every time you press **Refresh Printers**, using Qt first and the Windows
   spooler API as a cross-check. The line under the printer box says how many printers were found and which is selected.
@@ -88,20 +111,23 @@ change such templates (automatic-layout templates always use the current instruc
 ## Project structure
 
 ```
-main.py                    entry point (--selftest = headless check)
-app/models.py              dataclasses: Instruction, Element, Page, Document, Template
-app/errors.py              error type shown to the user
-app/database.py            local SQLite storage, migrations, default instructions and templates
-installer/                 Inno Setup script
-docs/                      sharing / deployment notes
-app/paths.py               user-data folder and bundled-resource paths
-app/symbols.py             built-in vector symbol library
-app/renderer.py            ONE drawing path for editor, preview and printer
-app/layout.py              automatic grid layout + pagination
-app/printing.py            Qt printer discovery, preview/print rendering, margin checks
-app/ui/                    main window, layout editor, dialogs, styles
-PackFlow.spec              PyInstaller configuration
-build.bat                  one-click build + packaged-exe test
+main.py             entry point (--selftest = headless check, --printer-diag = printer report)
+requirements.txt    runtime and build dependencies
+app/                application source
+  database.py         local SQLite storage, versioned migrations, default instructions
+  models.py           Instruction, Element, Page, Document, Template
+  paths.py            user-data folder and bundled-resource paths
+  renderer.py         ONE drawing path for editor, preview, PDF and printer
+  layout.py           automatic grid layout + pagination
+  printing.py         printer discovery, preview/print, margin checks
+  symbols.py          built-in vector symbols
+  selftest.py         --selftest / --printer-diag
+  ui/                 main window, layout editor, dialogs, styles
+resources/          icon.ico and other bundled assets
+scripts/            build.bat, build_installer.bat, run_from_source.bat
+packaging/          PackFlow.spec (PyInstaller)
+installer/          PackFlow.iss (Inno Setup)
+docs/               deployment notes
 ```
 
 Adding a symbol: write a `draw(painter)` function on a 100 × 100 canvas in `app/symbols.py` and add it to

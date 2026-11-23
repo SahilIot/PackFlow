@@ -2,7 +2,8 @@
 REM Builds dist\PackFlow\PackFlow.exe and tests the packaged exe.
 REM Requires Python 3.10+ for Windows (python.org, tick "Add python.exe to PATH").
 setlocal
-cd /d "%~dp0"
+cd /d "%~dp0.."
+REM (the script lives in scripts\ ; everything below runs from the project root)
 
 where py >nul 2>nul && (set PY=py -3) || (set PY=python)
 %PY% --version || (echo Python was not found. Install it from https://www.python.org/downloads/ & exit /b 1)
@@ -16,7 +17,7 @@ python -m pip install -r requirements.txt || exit /b 1
 
 if exist build rmdir /s /q build
 if exist dist rmdir /s /q dist
-pyinstaller --noconfirm --clean PackFlow.spec || exit /b 1
+pyinstaller --noconfirm --clean packaging\PackFlow.spec || exit /b 1
 
 echo.
 echo ===== Checking that the Qt printing components were packaged =====

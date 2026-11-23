@@ -3,8 +3,8 @@
 PackFlow is a standalone Windows program. Each computer keeps its own instructions, templates, layouts and settings. No server, account, database installation or internet connection is needed.
 
 ## Build once (on one Windows computer with Python 3.10+)
-1. `build.bat` - creates `dist\PackFlow\PackFlow.exe` (a folder; Python is not needed to run it) and runs a self-check.
-2. `build_installer.bat` (needs Inno Setup 6) - creates `installer\Output\PackFlow-Setup.exe`.
+1. `scripts\build.bat` - creates `dist\PackFlow\PackFlow.exe` (a folder; Python is not needed to run it) and runs a self-check.
+2. `scripts\build_installer.bat` (needs Inno Setup 6) - creates `installer\Output\PackFlow-Setup.exe`.
 
 ## Share
 Give colleagues `PackFlow-Setup.exe` (or zip the `dist\PackFlow` folder; they run `PackFlow.exe` from it).
