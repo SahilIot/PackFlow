@@ -7,7 +7,8 @@ from typing import Callable
 from PySide6.QtWidgets import (QDialog, QHBoxLayout, QInputDialog, QLabel, QListWidget, QListWidgetItem, QMessageBox,
                                QPushButton, QVBoxLayout, QWidget)
 
-from ..database import Database, DatabaseError
+from ..errors import DatabaseError
+from ..database import Database
 from ..models import Document, Template
 
 
@@ -105,7 +106,12 @@ class TemplateDialog(QDialog):
         t = self._current()
         if t and QMessageBox.question(self, "Delete template", f"Delete the template '{t.name}'?\nThis cannot be undone.",
                                       QMessageBox.Yes | QMessageBox.No, QMessageBox.No) == QMessageBox.Yes:
-            self.db.delete_template(t.id)  # type: ignore[arg-type]
+            try:
+                self.db.delete_template(t.id)  # type: ignore[arg-type]
+            except DatabaseError as exc:
+                QMessageBox.warning(self, "Template not deleted", str(exc))
+                self._reload()
+                return
             self.changed = True
             self._reload()
 
@@ -113,7 +119,8 @@ class TemplateDialog(QDialog):
         try:
             tid = self.db.save_template(t)
         except DatabaseError as exc:
-            QMessageBox.warning(self, "Template", str(exc))
+            QMessageBox.warning(self, "Template not saved", str(exc))
+            self._reload()
             return
         self.changed = True
         self._reload(tid)

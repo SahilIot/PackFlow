@@ -1,7 +1,7 @@
-"""Headless self-check used to verify a packaged build: `MachinePackingPrint.exe --selftest`.
+"""Headless self-check used to verify a packaged build: `PackFlow.exe --selftest`.
 
 Checks database creation, layout, vector rendering to PDF and printer detection,
-then writes a report to %TEMP%\\MachinePackingPrint_selftest.txt and exits 0 (pass) or 1.
+then writes a report to %TEMP%\\PackFlow_selftest.txt and exits 0 (pass) or 1.
 """
 from __future__ import annotations
 
@@ -13,7 +13,7 @@ from pathlib import Path
 
 
 def run_selftest() -> int:
-    report = Path(tempfile.gettempdir()) / "MachinePackingPrint_selftest.txt"
+    report = Path(tempfile.gettempdir()) / "PackFlow_selftest.txt"
     lines: list[str] = []
     ok = True
     tmp = tempfile.mkdtemp(prefix="mpp_selftest_")
@@ -23,15 +23,22 @@ def run_selftest() -> int:
         app = QApplication(sys.argv)          # must exist for printing and fonts
         app.processEvents()
         from . import printing
-        from .database import Database
+        from .database import DEFAULT_INSTRUCTIONS, Database
         from .layout import build_document
-        from .models import AutoLayoutParams
+        from .models import AutoLayoutParams, Instruction
         from .paths import db_path, resource_path
 
+        # local SQLite database is created on first start and seeded with the default instructions
         db = Database(db_path())
-        ins = db.list_instructions()
-        lines.append(f"database: OK ({len(ins)} instructions, {len(db.list_templates())} templates) at {db.path}")
-        assert len(ins) >= 10, "default instructions missing"
+        n = len(db.list_instructions())
+        assert n >= 10, f"database was not seeded ({n} instructions)"
+        db.set_setting("copies", "3"); db.close()
+        db = Database(db_path())
+        assert db.get_setting("copies") == "3" and len(db.list_instructions()) == n, "data did not survive a restart"
+        db.close()
+        lines.append(f"local SQLite database: OK ({n} instructions, survives restart)")
+        ins = [Instruction(name=n, text=n, symbol=sy, font_pt=pt, text_color=tc, symbol_color=sc, border_color=bc, id=i + 1)
+               for i, (n, sy, pt, tc, sc, bc) in enumerate(DEFAULT_INSTRUCTIONS)]
         doc = build_document(ins, AutoLayoutParams())
         pdf = str(Path(tmp) / "check.pdf")
         printing.export_pdf(doc, pdf)
@@ -64,7 +71,6 @@ def run_selftest() -> int:
         ok = ok and icon.exists()
         lines.append("printers:")
         lines.extend("  " + ln for ln in printing.diagnose())
-        db.close()
     except Exception:  # noqa: BLE001
         ok = False
         lines.append("FAILED:\n" + traceback.format_exc())
@@ -76,7 +82,7 @@ def run_selftest() -> int:
 
 def run_printer_diag() -> int:
     """`--printer-diag`: list printers as the app sees them (Qt and Windows API) and test that each opens."""
-    report = Path(tempfile.gettempdir()) / "MachinePackingPrint_printers.txt"
+    report = Path(tempfile.gettempdir()) / "PackFlow_printers.txt"
     try:
         from PySide6.QtWidgets import QApplication
         app = QApplication(sys.argv)

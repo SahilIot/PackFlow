@@ -1,4 +1,8 @@
-"""SQLite persistence: schema migrations, instructions, templates, settings."""
+"""Local SQLite storage: instructions, templates and settings for this computer.
+
+The file lives in %APPDATA%\\PackFlow and is created on first start. Schema upgrades are versioned (PRAGMA user_version),
+make a .bak-vN copy first and never erase data. A damaged file is set aside, not deleted.
+"""
 from __future__ import annotations
 
 import json
@@ -8,6 +12,7 @@ import time
 from pathlib import Path
 from typing import Any
 
+from .errors import DatabaseError
 from .models import AutoLayoutParams, Document, Instruction, Template
 from .symbols import SYMBOLS
 
@@ -83,10 +88,6 @@ def _migrate_v2(db: sqlite3.Connection) -> None:
 
 # Append future migrations here; never edit an existing one.
 MIGRATIONS = [_migrate_v1, _migrate_v2]
-
-
-class DatabaseError(RuntimeError):
-    pass
 
 
 class Database:

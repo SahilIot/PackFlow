@@ -11,7 +11,8 @@ from PySide6.QtWidgets import (QComboBox, QFrame, QGridLayout, QHBoxLayout, QInp
                                QVBoxLayout, QWidget)
 
 from .. import __version__, printing
-from ..database import Database, DatabaseError
+from ..database import Database
+from ..errors import DatabaseError
 from ..layout import build_document
 from ..models import COLOR_MODES, AutoLayoutParams, Document, Instruction, Template
 from .instruction_dialog import InstructionDialog
@@ -28,7 +29,7 @@ class MainWindow(QMainWindow):
     def __init__(self, db: Database) -> None:
         super().__init__()
         self.db = db
-        self.setWindowTitle("Machine Packing Print")
+        self.setWindowTitle("PackFlow")
         self.instructions: list[Instruction] = []
         self.custom_doc: Document | None = None     # None = automatic layout
         self.custom_name = ""
@@ -114,7 +115,7 @@ class MainWindow(QMainWindow):
         st_card, sv = card("Print Settings")
         g = QGridLayout(); g.setHorizontalSpacing(10); g.setVerticalSpacing(8)
         g.addWidget(label("Template"), 0, 0); g.addWidget(self.template_combo, 0, 1, 1, 3)
-        tb = QHBoxLayout(); tb.setSpacing(8); tb.addWidget(btn("Save…", self.save_template)); tb.addWidget(btn("Manage…", self.manage_templates))
+        tb = QHBoxLayout(); tb.setSpacing(8); self.save_tpl_btn = btn("Save…", self.save_template); tb.addWidget(self.save_tpl_btn); tb.addWidget(btn("Manage…", self.manage_templates))
         g.addLayout(tb, 0, 4)
         g.addWidget(label("Paper size"), 1, 0); g.addWidget(self.paper, 1, 1)
         g.addWidget(label("Orientation"), 1, 2); g.addWidget(self.orient, 1, 3, 1, 2)
@@ -269,7 +270,7 @@ class MainWindow(QMainWindow):
             try:
                 new_id = self.db.save_instruction(dlg.instruction())
             except DatabaseError as exc:
-                QMessageBox.warning(self, "Instruction", str(exc))
+                QMessageBox.warning(self, "Instruction not saved", str(exc))
                 continue
             keep = self.checked_ids() | ({new_id} if ins is None else set())
             self.reload_instructions(keep=keep)
@@ -281,7 +282,10 @@ class MainWindow(QMainWindow):
         if cur is None:
             return
         row = self.list.currentRow()
-        self.db.set_instruction_enabled(cur.id, not cur.enabled)  # type: ignore[arg-type]
+        try:
+            self.db.set_instruction_enabled(cur.id, not cur.enabled)  # type: ignore[arg-type]
+        except DatabaseError as exc:
+            QMessageBox.warning(self, "Not saved", str(exc)); self.reload_instructions(); return
         self.reload_instructions()
         self.list.setCurrentRow(row)       # keep the row selected so the button flips to Enable/Disable
         self._selection_edited()
@@ -293,7 +297,10 @@ class MainWindow(QMainWindow):
         if QMessageBox.question(self, "Delete instruction",
                                 f"Delete the instruction '{cur.name}'?\nThis cannot be undone.",
                                 QMessageBox.Yes | QMessageBox.No, QMessageBox.No) == QMessageBox.Yes:
-            self.db.delete_instruction(cur.id)  # type: ignore[arg-type]
+            try:
+                self.db.delete_instruction(cur.id)  # type: ignore[arg-type]
+            except DatabaseError as exc:
+                QMessageBox.warning(self, "Not deleted", str(exc)); self.reload_instructions(); return
             self.reload_instructions()
             self._selection_edited()
 
@@ -447,11 +454,11 @@ class MainWindow(QMainWindow):
             if QMessageBox.question(self, "Save template", f"A template named '{existing.name}' already exists. Replace it?",
                                     QMessageBox.Yes | QMessageBox.No, QMessageBox.No) != QMessageBox.Yes:
                 return
-            t.id = existing.id
+            t.id = existing.id     # explicit "Replace" confirmed above
         try:
             tid = self.db.save_template(t)
         except DatabaseError as exc:
-            QMessageBox.warning(self, "Template", str(exc)); return
+            QMessageBox.warning(self, "Template not saved", str(exc)); self.reload_templates(self.template_combo.currentData()); return
         self.custom_name = name
         self.reload_templates(tid)
         self.statusBar().showMessage(f"Template '{name}' saved", 5000)

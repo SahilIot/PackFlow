@@ -1,2 +1,2 @@
-"""Machine Packing Print."""
-__version__ = "1.1"
+"""PackFlow."""
+__version__ = "2.0"

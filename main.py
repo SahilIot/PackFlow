@@ -1,4 +1,4 @@
-"""Machine Packing Print - application entry point."""
+"""PackFlow - application entry point."""
 from __future__ import annotations
 
 import sys
@@ -8,8 +8,9 @@ from PySide6.QtCore import Qt
 from PySide6.QtGui import QFont, QIcon
 from PySide6.QtWidgets import QApplication, QMessageBox
 
-from app.database import Database, DatabaseError
-from app.paths import data_dir, db_path, resource_path
+from app.database import Database
+from app.errors import DatabaseError
+from app.paths import adopt_legacy_database, data_dir, db_path, resource_path
 from app.ui.main_window import MainWindow
 from app.ui.styles import build_stylesheet, light_palette
 
@@ -22,7 +23,7 @@ def main() -> int:
         from app.selftest import run_printer_diag
         return run_printer_diag()
     app = QApplication(sys.argv)
-    app.setApplicationName("Machine Packing Print")
+    app.setApplicationName("PackFlow")
     app.setStyle("Fusion")
     if hasattr(app.styleHints(), "setColorScheme"):        # Qt 6.8+: ignore Windows dark mode
         app.styleHints().setColorScheme(Qt.ColorScheme.Light)
@@ -35,14 +36,16 @@ def main() -> int:
 
     sys.excepthook = lambda t, v, tb: QMessageBox.critical(
         None, "Unexpected error", "".join(traceback.format_exception(t, v, tb))[-1500:])
+    adopt_legacy_database()                  # copies (never moves) an older MachinePackingPrint database, once
     try:
         db = Database(db_path())
     except (DatabaseError, OSError) as exc:
-        QMessageBox.critical(None, "Machine Packing Print", f"The data file could not be opened:\n{exc}\n\nFolder: {data_dir()}")
+        QMessageBox.critical(None, "PackFlow", f"The data file could not be opened:\n{exc}\n\nFolder: {data_dir()}")
         return 1
     if db.recovered_from:
         QMessageBox.warning(None, "Data file repaired",
-                            f"The data file was damaged and a new one was created.\nThe old file was kept as:\n{db.recovered_from}")
+                            "The data file was damaged, so PackFlow started with fresh defaults.\n"
+                            f"The damaged file was kept here:\n{db.recovered_from}")
     window = MainWindow(db)
     window.show()
     code = app.exec()
